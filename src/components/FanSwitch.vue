@@ -1,6 +1,6 @@
 <template>
-  <audio ref="switchAudioEl" id="switch-audio" src="/audio/switch.mp3"></audio>
-  <audio ref="audioEl" preload="metadata" id="switch-audio" src="/audio/fan.wav"></audio>
+  <audio ref="switchAudioEl" id="switch-audio" src="./audio/switch.mp3"></audio>
+  <audio ref="audioEl" preload="metadata" id="switch-audio" src="./audio/fan.wav"></audio>
   <button
     v-for="(item, index) in switchItems"
     :key="index"
