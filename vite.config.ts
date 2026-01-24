@@ -160,6 +160,7 @@ export default defineConfig(({ command, mode }) => ({
   ssgOptions: {
     script: 'async',
     formatting: 'minify',
+    base: '/electric-fan/',
   },
 
   optimizeDeps: {

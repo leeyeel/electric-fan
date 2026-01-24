@@ -19,10 +19,14 @@ import 'virtual:windi-devtools'
 
 const routes = setupLayouts(generatedRoutes)
 
+// 根据 build/dev 环境设置 base 路径
+const isBuild = import.meta.env.PROD
+const basePath = isBuild ? '/electric-fan/' : '/'
+
 // https://github.com/antfu/vite-ssg
 export const createApp = ViteSSG(
   App,
-  { routes },
+  { routes, base: basePath },
   (ctx) => {
     // install all modules under `modules/`
     Object.values(import.meta.globEager('./modules/*.ts')).map(i => i.install?.(ctx))
