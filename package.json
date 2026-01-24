@@ -2,12 +2,7 @@
   "name": "electric-fan",
   "version": "1.0.0",
   "private": true,
-  "description": "Electric Fan",
-  "author": {
-    "email": "me@yunyoujun.cn",
-    "name": "YunYouJun",
-    "url": "https://www.yunyoujun.cn"
-  },
+  "description": "Electric Fan - A simple web fan simulator",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -17,12 +17,19 @@ import LinkAttributes from 'markdown-it-link-attributes'
 
 const markdownWrapperClasses = 'prose prose-sm m-auto text-left'
 
-export default defineConfig({
-  base: '/electric-fan/',
+export default defineConfig(({ command, mode }) => ({
+  // 只在构建时设置 base 路径
+  base: command === 'build' ? '/electric-fan/' : '/',
   resolve: {
     alias: {
       '~/': `${path.resolve(__dirname, 'src')}/`,
     },
+  },
+  // Vue feature flags
+  define: {
+    __VUE_OPTIONS_API__: false,
+    __VUE_PROD_DEVTOOLS__: false,
+    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
   },
   plugins: [
     Vue({
@@ -166,4 +173,5 @@ export default defineConfig({
       'vue-demi',
     ],
   },
-})
+}))
+

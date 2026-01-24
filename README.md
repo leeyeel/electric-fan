@@ -1,56 +1,84 @@
 # electric-fan
 
-> [Electric Fan](https://fan.elpsy.cn)
+> Forked from [ElpsyCN/electric-fan](https://github.com/ElpsyCN/electric-fan)
 
-[未来道具研究所](https://elpsy.cn)
+一个简单的 Web 电风扇模拟器，使用 Vue 3 + TypeScript 开发。
 
-一个智障小工具
+![Electric Fan](https://img.shields.io/badge/Vue-3.2-42b883)
+![TypeScript](https://img.shields.io/badge/TypeScript-4.5-3178c6)
 
-电风扇！ 为你的夏日带去清凉！
+## 特性
 
-- [Web Demo](https://fan.elpsy.cn)
+- 纯 CSS + JavaScript 绘制风扇，低功耗
+- 三档风速调节
+- 平滑的加速/减速动画效果
+- 开关音效反馈
+- 支持深色模式
 
-## Feature
+## 开发
 
-### 优势
+### 安装依赖
 
-- 随时随地打开风扇
-- 便携
-- 低功耗（使用 HTML CSS 而非 Canvas 绘制）
-- 操作简单
-- 安装便捷
-
-### 劣势
-
-- 没有风
-
-## Intend
-
-……这是我在小空调之前写的，因为写的太丑甚至没好意思宣传，没想到小空调意外的火了。
-
-- [x] [空调](https://github.com/YunYouJun/air-conditioner)
-- [ ] 温度计 🌡️
-
-## About
-
-![云游君](https://cdn.jsdelivr.net/gh/YunYouJun/cdn/img/about/white-qrcode-and-search.jpg)
-
-## [Change Log](CHANGELOG.md)
-
-## Dev 开发
-
-```sh
-# install dependencies
-yarn
+```bash
+npm install
 ```
 
-```sh
-# 启动
-# http://localhost:3000/
-yarn dev
+### 启动开发服务器
+
+```bash
+npm run dev
 ```
 
-```sh
-# 构建
-yarn build
+访问 http://localhost:3000/ 查看效果
+
+### 构建
+
+```bash
+npm run build
 ```
+
+构建产物将生成在 `dist` 目录
+
+### 预览构建结果
+
+```bash
+npm run preview
+```
+
+## 项目结构
+
+```
+electric-fan/
+├── src/
+│   ├── components/       # 组件
+│   │   ├── Fan.vue       # 风扇主组件
+│   │   ├── FanSwitch.vue # 风扇开关组件
+│   │   └── BaseFooter.vue
+│   ├── pages/            # 页面
+│   ├── stores/           # 状态管理
+│   └── styles/           # 样式文件
+├── public/               # 静态资源
+│   └── audio/            # 音效文件
+└── vite.config.ts        # Vite 配置
+```
+
+## 技术栈
+
+- [Vue 3](https://vuejs.org/) - 渐进式 JavaScript 框架
+- [TypeScript](https://www.typescriptlang.org/) - JavaScript 的超集
+- [Vite](https://vitejs.dev/) - 下一代前端构建工具
+- [Windi CSS](https://windicss.org/) - 工具优先的 CSS 框架
+
+## 修改内容
+
+本版本在原项目基础上进行了以下改进：
+
+- 将动画周期从 1080°（3 圈）改为 120°
+- 使用 JavaScript `requestAnimationFrame` 替代 CSS `infinite` 动画
+- 添加线性加速/减速效果（启动和关闭）
+- 修复 `vue-about-me` 导入兼容性问题
+- 配置 GitHub Pages 部署
+
+## 许可
+
+本项目继承原项目的开源许可。
