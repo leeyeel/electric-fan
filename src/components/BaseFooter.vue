@@ -14,7 +14,7 @@
 <script lang="ts" setup>
 import { isDark } from '~/composables'
 
-import VueAboutMe from 'vue-about-me'
+import { VueAboutMe } from 'vue-about-me'
 import 'vue-about-me/style.css'
 
 const adsenseLink = 'https://sponsors.yunyoujun.cn'
