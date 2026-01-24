@@ -21,14 +21,7 @@ $circle-border-width: 8px;
 $circle-position: math.div($leaf-width, 2) -
   (math.div($circle-width, 2) + $circle-border-width);
 
-@keyframes leafsRotate {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(120deg);
-  }
-}
+// 动画已移至 JavaScript 控制，不再使用 CSS keyframes
 
 .fan-btn {
   display: inline-flex;
@@ -88,7 +81,6 @@ $circle-position: math.div($leaf-width, 2) -
     .leafs {
       z-index: 2;
       position: absolute;
-      animation: leafsRotate 0s infinite linear;
       transform-origin: center center;
       width: $leaf-width;
       height: $leaf-width;
@@ -131,27 +123,6 @@ $circle-position: math.div($leaf-width, 2) -
         @extend .leaf;
         transform: rotate(240deg);
       }
-    }
-
-    .leafs-0 {
-      @extend .leafs;
-      animation-duration: 0.33s;
-      animation-timing-function: ease-out;
-      animation-delay: 0s;
-      animation-iteration-count: 1;
-      animation-fill-mode: forwards;
-    }
-    .leafs-1 {
-      @extend .leafs;
-      animation-duration: 0.22s;
-    }
-    .leafs-2 {
-      @extend .leafs;
-      animation-duration: 0.17s;
-    }
-    .leafs-3 {
-      @extend .leafs;
-      animation-duration: 0.09s;
     }
   }
 
