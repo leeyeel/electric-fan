@@ -1,112 +1,116 @@
 <template>
   <div id="fan">
-    <div class="fan-header">
-      <div ref="leafsRef" class="leafs" :style="{ transform: `rotate(${currentRotation}deg)` }">
-        <div class="circle"></div>
-        <div class="leaf-1"></div>
-        <div class="leaf-2"></div>
-        <div class="leaf-3"></div>
-      </div>
-    </div>
-    <div class="fan-neck"></div>
-    <div class="fan-footer"></div>
+    <svg class="fan-drawing" viewBox="0 0 280 360" role="img" :aria-label="`电风扇，${levelName}`">
+      <defs>
+        <path
+          id="fan-blade"
+          d="M 137 123 C 119 108 107 86 112 62 C 117 40 141 31 163 44 C 188 59 193 83 177 102 C 167 114 151 122 137 123 Z"
+        />
+        <g id="fan-rotor">
+          <use href="#fan-blade" />
+          <use href="#fan-blade" transform="rotate(120 140 130)" />
+          <use href="#fan-blade" transform="rotate(240 140 130)" />
+        </g>
+        <radialGradient id="fan-disc">
+          <stop offset="0.16" stop-color="currentColor" stop-opacity="0" />
+          <stop offset="0.55" stop-color="currentColor" stop-opacity="0.3" />
+          <stop offset="0.86" stop-color="currentColor" stop-opacity="1" />
+          <stop offset="1" stop-color="currentColor" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+
+      <path class="fan-stand" d="M 133 244 L 131 317 L 149 317 L 147 244 Z" />
+      <path class="fan-base" d="M 71 327 Q 71 316 89 315 L 191 315 Q 209 316 209 327 Z" />
+      <circle class="fan-shell" cx="140" cy="130" r="115" />
+      <circle class="fan-rim" cx="140" cy="130" r="105" />
+
+      <circle cx="140" cy="130" r="99" fill="url(#fan-disc)" :opacity="exposure.discOpacity" />
+      <g
+        class="fan-moving-blades"
+        :transform="`rotate(${rotation} 140 130)`"
+        :style="{ filter: exposure.blur > 0 ? `blur(${exposure.blur}px)` : undefined }"
+      >
+        <!-- Exposure samples follow the previous positions of the actual rotor. -->
+        <g v-if="speed > 0" class="fan-trails">
+          <use
+            v-for="sample in trailSamples"
+            :key="sample"
+            href="#fan-rotor"
+            :transform="`rotate(${-exposure.angle * sample / trailSamples} 140 130)`"
+            :opacity="exposure.trailOpacity"
+          />
+        </g>
+        <use class="fan-sharp-blades" href="#fan-rotor" :opacity="exposure.bladeOpacity" />
+      </g>
+
+      <g class="fan-grille">
+        <circle v-for="radius in [44, 72, 98]" :key="radius" cx="140" cy="130" :r="radius" />
+        <path
+          v-for="spoke in 8"
+          :key="spoke"
+          d="M 140 113 L 140 25"
+          :transform="`rotate(${spoke * 45} 140 130)`"
+        />
+      </g>
+      <circle class="fan-hub" cx="140" cy="130" r="16" />
+      <circle class="fan-hub-dot" cx="140" cy="130" r="4" />
+    </svg>
+    <p class="fan-status" role="status">
+      <span class="fan-wind-bars" :class="{ 'is-coasting': isCoasting }" aria-hidden="true">
+        <span v-for="bar in 3" :key="bar" :class="{ 'is-on': store.state.level >= bar }"></span>
+      </span>
+      {{ isCoasting ? '正在缓缓停下' : levelName }}
+    </p>
   </div>
   <FanSwitch />
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { store } from '~/stores'
+import { advanceFan, fanExposure, FAN_LEVEL_NAMES } from '~/utils/fan'
 
-// 旋转角度（持续累积，永不重置）
-const currentRotation = ref(0)
-const leafsRef = ref<HTMLElement | null>(null)
-
-// 速度配置（度/秒）
-const speedConfig = {
-  0: 0,      // 停止
-  1: 545,    // 120度 / 0.22秒 ≈ 545度/秒
-  2: 706,    // 120度 / 0.17秒 ≈ 706度/秒
-  3: 1333,   // 120度 / 0.09秒 ≈ 1333度/秒
-}
-
-// 加速度配置（度/秒²）
-// 在约7.5秒内从0加速到最高速度1333度/秒
-const ACCELERATION = 180
-// 减速度配置（度/秒²），稍快于加速度，更真实
-const DECELERATION = 240
-
-// 当前速度（度/秒）
-let currentSpeed = 0
-// 目标速度（度/秒）
-let targetSpeed = 0
-
+const rotation = ref(0)
+const speed = computed(() => store.state.speed)
+const exposure = computed(() => fanExposure(speed.value))
+const levelName = computed(() => FAN_LEVEL_NAMES[store.state.level])
+const isCoasting = computed(() => store.state.level === 0 && speed.value > 0)
+const trailSamples = 18
 let animationId: number | null = null
 let lastTime: number | null = null
 
-// 动画循环
-const animate = (timestamp: number) => {
-  if (lastTime === null) {
-    lastTime = timestamp
-  }
-
-  const deltaTime = (timestamp - lastTime) / 1000 // 转换为秒
+function animate(timestamp: number) {
+  // Discard long gaps after a background tab resumes, avoiding a sudden jump.
+  const elapsed = lastTime === null ? 0 : Math.min((timestamp - lastTime) / 1000, 0.05)
   lastTime = timestamp
+  const next = advanceFan(speed.value, rotation.value, store.state.level, elapsed)
+  store.state.speed = next.speed
+  rotation.value = next.rotation
 
-  // 计算当前应该达到的目标速度
-  const level = store.state.level
-  targetSpeed = speedConfig[level as keyof typeof speedConfig]
-
-  if (Math.abs(currentSpeed - targetSpeed) < 1) {
-    // 已接近目标速度，直接使用目标速度
-    currentSpeed = targetSpeed
-
-    if (targetSpeed === 0) {
-      // 完全停止
-      animationId = null
-      lastTime = null
-      currentRotation.value = Math.round(currentRotation.value) // 修正到整数角度
-      return
-    }
-  } else if (currentSpeed < targetSpeed) {
-    // 加速
-    currentSpeed += ACCELERATION * deltaTime
-    // 防止超调
-    if (currentSpeed > targetSpeed) {
-      currentSpeed = targetSpeed
-    }
-  } else {
-    // 减速
-    currentSpeed -= DECELERATION * deltaTime
-    // 防止超调
-    if (currentSpeed < targetSpeed) {
-      currentSpeed = targetSpeed
-    }
+  if (next.speed === 0 && store.state.level === 0) {
+    animationId = null
+    lastTime = null
+    return
   }
-
-  // 更新旋转角度
-  currentRotation.value += currentSpeed * deltaTime
-
   animationId = requestAnimationFrame(animate)
 }
 
-// 监听档位变化
-watch(() => store.state.level, () => {
-  // 如果动画未运行，启动它
-  if (animationId === null) {
-    lastTime = null
+function startAnimation() {
+  const level = store.state.level
+  if (animationId === null && (level > 0 || speed.value > 0))
     animationId = requestAnimationFrame(animate)
-  }
-}, { immediate: true })
+}
 
-// 组件卸载时清理动画
+watch(() => store.state.level, startAnimation)
+onMounted(startAnimation)
+
 onUnmounted(() => {
-  if (animationId !== null) {
+  if (animationId !== null)
     cancelAnimationFrame(animationId)
-  }
+  store.state.speed = 0
 })
 </script>
 
 <style lang="scss">
-@import '~/styles/fan.scss';
+@use '~/styles/fan.scss';
 </style>

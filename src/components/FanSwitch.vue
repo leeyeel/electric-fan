@@ -1,97 +1,45 @@
 <template>
-  <audio ref="switchAudioEl" id="switch-audio" src="./audio/switch.mp3"></audio>
-  <audio ref="audioEl" preload="metadata" id="switch-audio" src="./audio/fan.wav"></audio>
-  <button
-    v-for="(item, index) in switchItems"
-    :key="index"
-    class="fan-btn"
-    :class="[item.class, item.value === state.level.value ? 'is-active' : '']"
-    :label="item.name"
-    @click="
-      () => {
-        radioChange(item.value);
-        playSwitchAudio();
-      }
-    "
-  >
-    {{ item.name }}
-  </button>
+  <div class="fan-controls" role="group" aria-label="风扇档位">
+    <button
+      v-for="item in switchItems"
+      :key="item.value"
+      type="button"
+      class="fan-btn"
+      :class="{ 'is-active': item.value === store.state.level }"
+      :aria-label="item.label"
+      :aria-pressed="item.value === store.state.level"
+      :title="item.label"
+      @click="changeLevel(item.value)"
+    >
+      {{ item.name }}
+    </button>
+  </div>
+  <p v-if="audioError" class="fan-audio-error" role="status">
+    {{ audioError }}
+    <button type="button" @click="changeLevel(store.state.level)">重试声音</button>
+  </p>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 import { store } from '~/stores'
-
-const stopFlag = ref(false)
-const state = toRefs(store.state)
+import { FanAudio } from '~/utils/fanAudio'
 
 const switchItems = [
-  { name: '关', class: 'switch_0', value: 0 },
-  { name: '1', class: 'switch_1', value: 1 },
-  { name: '2', class: 'switch_2', value: 2 },
-  { name: '3', class: 'switch_3', value: 3 },
+  { name: '关', label: '关闭风扇', value: 0 },
+  { name: '1', label: '一档，轻风', value: 1 },
+  { name: '2', label: '二档，凉风', value: 2 },
+  { name: '3', label: '三档，强风', value: 3 },
 ]
 
-const audioEl = ref<HTMLAudioElement>()
-const switchAudioEl = ref<HTMLAudioElement>()
+const audioError = ref('')
+const audio = new FanAudio((message) => { audioError.value = message })
 
-function radioChange(level: number) {
-  store.state.level = level
-
-  switch (level) {
-    case 0:
-      stopAudio()
-      break
-    default:
-      stopFlag.value = false
-      if (!audioEl.value) {
-        return
-      }
-      if (
-        audioEl.value.currentTime === 0 ||
-        audioEl.value.currentTime === audioEl.value.duration
-      ) {
-        playFanAudio(0)
-      } else {
-        playFanAudio()
-      }
-      break
-  }
+function changeLevel(level: number) {
+  store.setLevel(level)
+  void audio.selectLevel(level)
 }
 
-/**
- * 播放切换开关音效
- */
-function playSwitchAudio() {
-  if (switchAudioEl.value)
-    switchAudioEl.value.play()
-}
-
-/**
- * 停止声音
- */
-function stopAudio() {
-  if (audioEl.value) {
-    audioEl.value.currentTime = 6
-  }
-  stopFlag.value = true
-}
-
-/**
- * 播放风扇音频
- */
-function playFanAudio(currentTime = 3.5) {
-  if (!stopFlag.value) {
-    if (!audioEl.value) {
-      return
-    }
-
-    audioEl.value.currentTime = currentTime
-    audioEl.value.play()
-    const delayTime = audioEl.value.duration - audioEl.value.currentTime - 1
-    setTimeout(function() {
-      playFanAudio()
-    }, delayTime * 1000)
-  }
-}
+watch(() => store.state.speed, speed => audio.updateSpeed(speed))
+onUnmounted(() => audio.dispose())
 </script>

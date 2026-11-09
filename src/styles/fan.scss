@@ -1,28 +1,3 @@
-@use "sass:math";
-$background-color: var(--fan-color);
-$border-color: var(--fan-color);
-
-$fan-width: 220px;
-
-$header-width: $fan-width;
-$header-border-width: 10px;
-
-$leaf-border-width: 8px;
-$leaf-width: 200px;
-
-$neck-width: 10px;
-$neck-height: 60px;
-
-$footer-height: 10px;
-$footer-width: 150px;
-
-$circle-width: 10px;
-$circle-border-width: 8px;
-$circle-position: math.div($leaf-width, 2) -
-  (math.div($circle-width, 2) + $circle-border-width);
-
-// 动画已移至 JavaScript 控制，不再使用 CSS keyframes
-
 .fan-btn {
   display: inline-flex;
   justify-content: center;
@@ -33,119 +8,114 @@ $circle-position: math.div($leaf-width, 2) -
   border: 2px solid var(--fan-color);
   border-bottom-width: 0.25rem;
   margin: 0.5rem;
-  font-size: 1rem;
-
-  outline: none;
-
-  font-family: monospace;
-  font-weight: bold;
-
-  transition: 0.2s;
+  font: bold 1rem monospace;
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s, transform 0.2s;
 
   &:hover {
     color: var(--fan-bg-color);
     background-color: var(--fan-color);
   }
 
-  &:focus {
-    outline: none;
+  &:focus-visible {
+    outline: 2px solid var(--fan-color);
+    outline-offset: 5px;
   }
 
   &.is-active,
   &:active {
     color: var(--fan-bg-color);
     background-color: var(--fan-color);
-    transform: translateY(0.32rem);
+    transform: translateY(0.25rem);
     border-bottom-width: 1px;
   }
 }
 
 #fan {
-  width: $fan-width;
-  height: $header-width + $neck-height + $footer-height;
-  margin: 2rem auto;
-  position: relative;
-  z-index: 4;
-  .fan-header {
-    box-sizing: content-box;
+  width: min(280px, 86vw);
+  margin: 1.25rem auto 1rem;
+  color: var(--fan-color);
 
-    width: $header-width;
-    height: $header-width;
-    position: absolute;
-    left: -$header-border-width;
-    top: -$header-border-width;
-    border-radius: 50%;
-    z-index: 1;
-    border: solid $header-border-width $border-color;
-
-    .leafs {
-      z-index: 2;
-      position: absolute;
-      transform-origin: center center;
-      width: $leaf-width;
-      height: $leaf-width;
-      top: $header-border-width;
-      left: $header-border-width;
-
-      .circle {
-        box-sizing: content-box;
-
-        width: $circle-width;
-        height: $circle-width;
-        border: solid $circle-border-width $border-color;
-        border-radius: 50%;
-        position: absolute;
-        left: $circle-position;
-        top: $circle-position;
-      }
-
-      .leaf {
-        box-sizing: content-box;
-
-        width: 72px;
-        height: 60px;
-        border-radius: 20% 50%;
-        border: $leaf-border-width solid $border-color;
-        position: absolute;
-        left: math.div($leaf-width, 2);
-        top: math.div($leaf-width, 2);
-        transform-origin: 0% 0%;
-      }
-
-      .leaf-1 {
-        @extend .leaf;
-      }
-      .leaf-2 {
-        @extend .leaf;
-        transform: rotate(120deg);
-      }
-      .leaf-3 {
-        @extend .leaf;
-        transform: rotate(240deg);
-      }
-    }
+  .fan-drawing {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
   }
 
-  .fan-neck {
-    width: $neck-width;
-    height: $neck-height;
-    background: $background-color;
-    position: absolute;
-    top: $header-width + 8px;
-    left: math.div($header-width, 2) -
-      math.div($neck-width, 2);
-    z-index: 2;
+  .fan-shell,
+  .fan-rim,
+  .fan-grille {
+    fill: none;
+    stroke: currentColor;
   }
 
-  .fan-footer {
-    width: $footer-width;
-    height: $footer-height;
-    border-radius: 5%;
-    background: $background-color;
-    position: absolute;
-    top: $header-width + $neck-height + 8px;
-    left: math.div($fan-width, 2) -
-      math.div($footer-width, 2);
-    z-index: 3;
+  .fan-shell { stroke-width: 7; }
+  .fan-rim { stroke-width: 1; opacity: 0.28; }
+
+  .fan-moving-blades {
+    fill: currentColor;
+    fill-opacity: 0.13;
+    stroke: currentColor;
+    stroke-width: 4;
+    stroke-linejoin: round;
+  }
+
+  .fan-grille {
+    stroke-width: 0.75;
+    opacity: 0.2;
+    pointer-events: none;
+  }
+
+  .fan-stand,
+  .fan-base,
+  .fan-hub-dot { fill: currentColor; }
+
+  .fan-base { stroke: currentColor; stroke-width: 3; stroke-linejoin: round; }
+  .fan-hub { fill: var(--fan-bg-color); stroke: currentColor; stroke-width: 4; }
+}
+
+.fan-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 1.5rem;
+  margin: -0.25rem 0 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+}
+
+.fan-wind-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 13px;
+
+  span {
+    width: 3px;
+    height: 5px;
+    border-radius: 2px;
+    background: currentColor;
+    opacity: 0.18;
+    transition: opacity 0.3s;
+
+    &:nth-child(2) { height: 9px; }
+    &:nth-child(3) { height: 13px; }
+    &.is-on { opacity: 1; }
+  }
+
+  &.is-coasting span { opacity: 0.4; }
+}
+
+.fan-audio-error {
+  margin: 1rem;
+  font-size: 0.8rem;
+
+  button {
+    margin-left: 0.3rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 }

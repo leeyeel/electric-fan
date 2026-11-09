@@ -1,5 +1,5 @@
 import path from 'path'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import Vue from '@vitejs/plugin-vue'
 import Pages from 'vite-plugin-pages'
 import Layouts from 'vite-plugin-vue-layouts'
@@ -17,9 +17,9 @@ import LinkAttributes from 'markdown-it-link-attributes'
 
 const markdownWrapperClasses = 'prose prose-sm m-auto text-left'
 
-export default defineConfig(({ command, mode }) => ({
-  // 只在构建时设置 base 路径
-  base: command === 'build' ? '/electric-fan/' : '/',
+export default defineConfig(({ mode }) => ({
+  // Cloudflare Pages uses /; GitHub Pages sets VITE_BASE_URL in its workflow.
+  base: loadEnv(mode, process.cwd(), 'VITE_').VITE_BASE_URL || '/',
   resolve: {
     alias: {
       '~/': `${path.resolve(__dirname, 'src')}/`,
@@ -110,24 +110,24 @@ export default defineConfig(({ command, mode }) => ({
     // https://github.com/antfu/vite-plugin-pwa
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'robots.txt', 'safari-pinned-tab.svg'],
+      includeAssets: ['favicon.ico', 'robots.txt', 'audio/*.wav', 'audio/*.mp3'],
       manifest: {
         name: 'Electric Fan',
         short_name: 'Fan',
         theme_color: '#ffffff',
         icons: [
           {
-            src: '/img/icons/pwa-192x192.png',
+            src: 'img/icons/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/img/icons/pwa-512x512.png',
+            src: 'img/icons/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
           },
           {
-            src: '/img/icons/pwa-512x512.png',
+            src: 'img/icons/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
@@ -160,7 +160,6 @@ export default defineConfig(({ command, mode }) => ({
   ssgOptions: {
     script: 'async',
     formatting: 'minify',
-    base: '/electric-fan/',
   },
 
   optimizeDeps: {
@@ -175,4 +174,3 @@ export default defineConfig(({ command, mode }) => ({
     ],
   },
 }))
-

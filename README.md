@@ -9,10 +9,10 @@
 
 ## 特性
 
-- 纯 CSS + JavaScript 绘制风扇，低功耗
-- 三档风速调节
-- 平滑的加速/减速动画效果
-- 开关音效反馈
+- SVG 绘制风扇，支持深浅主题和屏幕缩放
+- 三档风速调节（60 / 180 / 360 RPM）
+- 平滑的加速/减速，随实际转速增强的旋转拖影与视觉模糊
+- 开关音效和无缝循环风声，音调、音量随实际转速变化
 - 支持深色模式
 
 ## 开发
@@ -38,6 +38,25 @@ npm run build
 ```
 
 构建产物将生成在 `dist` 目录
+
+### Cloudflare Pages 部署
+
+构建命令为 `npm run build`，输出目录为 `dist`，默认部署在域名根路径 `/`。
+如果 Cloudflare 中之前设置过 `VITE_BASE_URL=/electric-fan/`，请删除该设置后重新构建。
+
+需要部署到子目录时，设置 `VITE_BASE_URL`，例如 GitHub Pages：
+
+```bash
+VITE_BASE_URL=/electric-fan/ npm run build
+```
+
+路由、静态资源、音频和 PWA 使用同一个 base；GitHub Pages 工作流已单独设置子目录。
+音频在点击档位时解锁，完整下载并解码后使用 Web Audio 循环播放，不依赖媒体时长加载或服务器 Range 请求。
+若浏览器限制声音或资源加载失败，页面会提供“重试声音”按钮。
+
+### 回归测试
+
+使用 Node.js 18 或更高版本执行 `npm test`，检查加减速、音频冷加载、快速切档、失败重试和循环接缝。
 
 ### 预览构建结果
 
@@ -73,9 +92,10 @@ electric-fan/
 
 本版本在原项目基础上进行了以下改进：
 
-- 将动画周期从 1080°（3 圈）改为 120°
-- 使用 JavaScript `requestAnimationFrame` 替代 CSS `infinite` 动画
-- 添加线性加速/减速效果（启动和关闭）
+- 使用 SVG 曲面扇叶及多重曝光拖影，拉开三档转速差异
+- 使用 JavaScript `requestAnimationFrame` 实现与刷新率无关的加减速
+- 用 Web Audio 取代依赖 `duration` 的递归音频定时器，处理加载失败、快速切档与卸载清理
+- 统一部署 base，兼容 Cloudflare Pages 根路径与 GitHub Pages 子目录
 - 修复 `vue-about-me` 导入兼容性问题
 - 配置 GitHub Pages 部署
 
