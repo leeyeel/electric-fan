@@ -7,17 +7,23 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
         with:
           submodules: true
 
-      - name: Setup Node
-        uses: actions/setup-node@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
         with:
-          node-version: "14.x"
+          run_install: false
 
-      - run: yarn
-      - run: yarn build
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.x
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
         env:
           VITE_BASE_URL: /electric-fan/
 

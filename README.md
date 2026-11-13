@@ -2,103 +2,77 @@
 
 > Forked from [ElpsyCN/electric-fan](https://github.com/ElpsyCN/electric-fan)
 
-一个简单的 Web 电风扇模拟器，使用 Vue 3 + TypeScript 开发。
-
-![Electric Fan](https://img.shields.io/badge/Vue-3.2-42b883)
-![TypeScript](https://img.shields.io/badge/TypeScript-4.5-3178c6)
+使用 Vue 3 + TypeScript 开发的 Web 电风扇模拟器。本 fork 已同步源仓库 v0.2.0，同时保留 Cloudflare Pages 根路径与 GitHub Pages 子目录部署配置。
 
 ## 特性
 
-- SVG 绘制风扇，支持深浅主题和屏幕缩放
-- 三档风速调节（60 / 180 / 360 RPM）
-- 平滑的加速/减速，随实际转速增强的旋转拖影与视觉模糊
-- 开关音效和无缝循环风声，音调、音量随实际转速变化
-- 支持深色模式
+- CSS 3D 风扇，可拖动旋转视角、双击复位
+- 三档风速、惯性加减速、自然风、摇头与定时关闭
+- 防护罩彩带随风飘动，风声音量和音调跟随转速
+- 实时语音与录音回放，声音仅在本机处理
+- 深浅主题、静音与键盘操作
+- Vue 风扇组件、框架无关状态机与 Yun Home 插件
 
 ## 开发
 
-### 安装依赖
+需要 Node.js >=22.13.0 与 pnpm 11（版本由 package.json 的 packageManager 指定）。
 
 ```bash
-npm install
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-### 启动开发服务器
+使用开发服务器输出的本地地址访问页面。
 
 ```bash
-npm run dev
+pnpm build             # 站点产物：dist
+pnpm preview           # 预览站点
+pnpm build:packages    # 构建组件包、状态机和插件
+pnpm check             # lint、包构建、站点构建、类型检查和测试
 ```
 
-访问 http://localhost:3000/ 查看效果
+`pnpm test` 同时运行源仓库的状态机/插件测试与本 fork 保留的加减速、音频加载、重试及循环接缝回归测试。
 
-### 构建
+## 部署
+
+Cloudflare Pages 使用 Node.js >=22.13.0，安装命令为 `pnpm install --frozen-lockfile`，构建命令为 `pnpm build`，输出目录为 `dist`，默认部署在根路径 `/`。
+
+若之前设置过 `VITE_BASE_URL=/electric-fan/`，部署到根路径时请删除该设置。部署到子目录时显式设置：
 
 ```bash
-npm run build
+VITE_BASE_URL=/electric-fan/ pnpm build
 ```
 
-构建产物将生成在 `dist` 目录
+路由、静态资源、音频和 PWA 共用此 base。GitHub Pages 工作流已配置 `/electric-fan/`。
 
-### Cloudflare Pages 部署
+## Packages
 
-构建命令为 `npm run build`，输出目录为 `dist`，默认部署在域名根路径 `/`。
-如果 Cloudflare 中之前设置过 `VITE_BASE_URL=/electric-fan/`，请删除该设置后重新构建。
+仓库采用 pnpm workspace，站点位于根目录。
 
-需要部署到子目录时，设置 `VITE_BASE_URL`，例如 GitHub Pages：
+| 包 | 说明 |
+| --- | --- |
+| [`@yunlefun-home/electric-fan`](packages/electric-fan) | CSS 3D Vue 风扇组件，支持内置控件和彩带 |
+| `@yunlefun-home/electric-fan/core` | 同一包的子路径，提供状态机与电机模拟，不依赖 Vue |
+| [`packages/home-plugin`](packages/home-plugin) | Yun Home 设备插件 |
+
+```ts
+import { ElectricFan } from '@yunlefun-home/electric-fan'
+import { fanReducer } from '@yunlefun-home/electric-fan/core'
+import '@yunlefun-home/electric-fan/style.css'
+```
+
+详细组件 API 见 [组件包说明](packages/electric-fan/README.md)，版本变化见 [CHANGELOG](CHANGELOG.md)。源仓库的 npm 发布流程需要对应包的可信发布权限；普通分支同步与站点部署不执行 npm 发布。
+
+## 同步源仓库
+
+`origin` 指向本 fork；`upstream` 指向源仓库，仅用于拉取更新，推送地址已禁用。
 
 ```bash
-VITE_BASE_URL=/electric-fan/ npm run build
+git fetch upstream
+git merge upstream/master
+git push origin master
 ```
-
-路由、静态资源、音频和 PWA 使用同一个 base；GitHub Pages 工作流已单独设置子目录。
-音频在点击档位时解锁，完整下载并解码后使用 Web Audio 循环播放，不依赖媒体时长加载或服务器 Range 请求。
-若浏览器限制声音或资源加载失败，页面会提供“重试声音”按钮。
-
-### 回归测试
-
-使用 Node.js 18 或更高版本执行 `npm test`，检查加减速、音频冷加载、快速切档、失败重试和循环接缝。
-
-### 预览构建结果
-
-```bash
-npm run preview
-```
-
-## 项目结构
-
-```
-electric-fan/
-├── src/
-│   ├── components/       # 组件
-│   │   ├── Fan.vue       # 风扇主组件
-│   │   ├── FanSwitch.vue # 风扇开关组件
-│   │   └── BaseFooter.vue
-│   ├── pages/            # 页面
-│   ├── stores/           # 状态管理
-│   └── styles/           # 样式文件
-├── public/               # 静态资源
-│   └── audio/            # 音效文件
-└── vite.config.ts        # Vite 配置
-```
-
-## 技术栈
-
-- [Vue 3](https://vuejs.org/) - 渐进式 JavaScript 框架
-- [TypeScript](https://www.typescriptlang.org/) - JavaScript 的超集
-- [Vite](https://vitejs.dev/) - 下一代前端构建工具
-- [Windi CSS](https://windicss.org/) - 工具优先的 CSS 框架
-
-## 修改内容
-
-本版本在原项目基础上进行了以下改进：
-
-- 使用 SVG 曲面扇叶及多重曝光拖影，拉开三档转速差异
-- 使用 JavaScript `requestAnimationFrame` 实现与刷新率无关的加减速
-- 用 Web Audio 取代依赖 `duration` 的递归音频定时器，处理加载失败、快速切档与卸载清理
-- 统一部署 base，兼容 Cloudflare Pages 根路径与 GitHub Pages 子目录
-- 修复 `vue-about-me` 导入兼容性问题
-- 配置 GitHub Pages 部署
 
 ## 许可
 
-本项目继承原项目的开源许可。
+本项目继承原项目的 [MIT 许可](LICENSE)。

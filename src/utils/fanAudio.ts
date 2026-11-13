@@ -109,7 +109,7 @@ export class FanAudio {
     }
     const strength = Math.min(1, Math.max(0, speed / MAX_FAN_SPEED))
     this.fan.playbackRate.setTargetAtTime(0.65 + strength * 0.85, this.context.currentTime, 0.08)
-    this.gain.gain.setTargetAtTime(Math.pow(strength, 0.65) * 0.65, this.context.currentTime, 0.08)
+    this.gain.gain.setTargetAtTime(strength ** 0.65 * 0.65, this.context.currentTime, 0.08)
   }
 
   dispose() {

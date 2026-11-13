@@ -1,28 +1,36 @@
-import path from 'path'
-import { defineConfig, loadEnv } from 'vite'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import VueI18n from '@intlify/unplugin-vue-i18n/vite'
+import { unheadVueComposablesImports } from '@unhead/vue'
 import Vue from '@vitejs/plugin-vue'
-import Pages from 'vite-plugin-pages'
-import Layouts from 'vite-plugin-vue-layouts'
-import Icons from 'unplugin-icons/vite'
-import IconsResolver from 'unplugin-icons/resolver'
-import Components from 'unplugin-vue-components/vite'
-import AutoImport from 'unplugin-auto-import/vite'
-import Markdown from 'vite-plugin-md'
-import WindiCSS from 'vite-plugin-windicss'
-import { VitePWA } from 'vite-plugin-pwa'
-import VueI18n from '@intlify/vite-plugin-vue-i18n'
-import Inspect from 'vite-plugin-inspect'
-import Prism from 'markdown-it-prism'
 import LinkAttributes from 'markdown-it-link-attributes'
+import Prism from 'markdown-it-prism'
+import UnoCSS from 'unocss/vite'
+import AutoImport from 'unplugin-auto-import/vite'
+import IconsResolver from 'unplugin-icons/resolver'
+import Icons from 'unplugin-icons/vite'
+import Components from 'unplugin-vue-components/vite'
+import Markdown from 'unplugin-vue-markdown/vite'
+import { defineConfig, loadEnv } from 'vite'
+import Inspect from 'vite-plugin-inspect'
+import Pages from 'vite-plugin-pages'
+import { VitePWA } from 'vite-plugin-pwa'
+import Layouts from 'vite-plugin-vue-layouts-next'
 
+const root = dirname(fileURLToPath(import.meta.url))
 const markdownWrapperClasses = 'prose prose-sm m-auto text-left'
 
 export default defineConfig(({ mode }) => ({
   // Cloudflare Pages uses /; GitHub Pages sets VITE_BASE_URL in its workflow.
-  base: loadEnv(mode, process.cwd(), 'VITE_').VITE_BASE_URL || '/',
+  base: loadEnv(mode, root, 'VITE_').VITE_BASE_URL || '/',
   resolve: {
     alias: {
-      '~/': `${path.resolve(__dirname, 'src')}/`,
+      '~/': `${resolve(root, 'src')}/`,
+      // Build the site straight from package sources; no prebuild step needed.
+      // Sub-paths first: an alias also matches longer specifiers that start with it.
+      '@yunlefun-home/electric-fan/core': resolve(root, 'packages/electric-fan/src/core/index.ts'),
+      '@yunlefun-home/electric-fan/style.css': resolve(root, 'packages/electric-fan/src/style.css'),
+      '@yunlefun-home/electric-fan': resolve(root, 'packages/electric-fan/src/index.ts'),
     },
   },
   // Vue feature flags
@@ -32,6 +40,9 @@ export default defineConfig(({ mode }) => ({
     __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
   },
   plugins: [
+    // https://unocss.dev/integrations/vite
+    UnoCSS(),
+
     Vue({
       include: [/\.vue$/, /\.md$/],
     }),
@@ -41,7 +52,7 @@ export default defineConfig(({ mode }) => ({
       extensions: ['vue', 'md'],
     }),
 
-    // https://github.com/JohnCampionJr/vite-plugin-vue-layouts
+    // https://github.com/JohnCampionJr/vite-plugin-vue-layouts-next
     Layouts(),
 
     // https://github.com/antfu/unplugin-auto-import
@@ -50,10 +61,29 @@ export default defineConfig(({ mode }) => ({
         'vue',
         'vue-router',
         'vue-i18n',
-        '@vueuse/head',
+        unheadVueComposablesImports,
         '@vueuse/core',
       ],
       dts: 'src/auto-imports.d.ts',
+    }),
+
+    // https://github.com/unplugin/unplugin-vue-markdown
+    Markdown({
+      wrapperClasses: markdownWrapperClasses,
+      headEnabled: true,
+      markdownUses: [
+        Prism,
+        [
+          LinkAttributes,
+          {
+            pattern: /^https?:\/\//,
+            attrs: {
+              target: '_blank',
+              rel: 'noopener',
+            },
+          },
+        ],
+      ],
     }),
 
     // https://github.com/antfu/unplugin-vue-components
@@ -79,32 +109,7 @@ export default defineConfig(({ mode }) => ({
 
     // https://github.com/antfu/unplugin-icons
     Icons({
-      autoInstall: true
-    }),
-
-    // https://github.com/antfu/vite-plugin-windicss
-    WindiCSS({
-      safelist: markdownWrapperClasses,
-    }),
-
-    // https://github.com/antfu/vite-plugin-md
-    // Don't need this? Try vitesse-lite: https://github.com/antfu/vitesse-lite
-    Markdown({
-      wrapperClasses: markdownWrapperClasses,
-      headEnabled: true,
-      markdownItSetup(md) {
-        // https://prismjs.com/
-        // @ts-expect-error types mismatch
-        md.use(Prism)
-        // @ts-expect-error types mismatch
-        md.use(LinkAttributes, {
-          pattern: /^https?:\/\//,
-          attrs: {
-            target: '_blank',
-            rel: 'noopener',
-          },
-        })
-      },
+      autoInstall: true,
     }),
 
     // https://github.com/antfu/vite-plugin-pwa
@@ -140,7 +145,7 @@ export default defineConfig(({ mode }) => ({
     VueI18n({
       runtimeOnly: true,
       compositionOnly: true,
-      include: [path.resolve(__dirname, 'locales/**')],
+      include: [resolve(root, 'locales/**')],
     }),
 
     // https://github.com/antfu/vite-plugin-inspect
@@ -167,7 +172,7 @@ export default defineConfig(({ mode }) => ({
       'vue',
       'vue-router',
       '@vueuse/core',
-      '@vueuse/head',
+      '@unhead/vue',
     ],
     exclude: [
       'vue-demi',
